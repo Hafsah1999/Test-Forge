@@ -2,15 +2,19 @@
 
 const { Schema, model } = require('../connection');
 
-const FormSchema = new Schema({
-  title: { type: String, required: true },
-  questions: [{
-    type: { type: String, required: true },
-    text: { type: String, required: true },
-    options: [String]
-  }],
-  createdAt: { type: Date, default: Date.now },
-  // Add more fields as needed
+const optionSchema = new Schema({
+  value: { type: String, required: true }
 });
 
-module.exports = model('Form', FormSchema);
+const questionSchema = new Schema({
+  type: { type: String, required: true, enum: ['short', 'paragraph', 'multiple'] },
+  options: [optionSchema]
+});
+
+const testSchema = new Schema({
+  title: { type: String, required: true },
+  questions: [questionSchema],
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = model('test', testSchema);
