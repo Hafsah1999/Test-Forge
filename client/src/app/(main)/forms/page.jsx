@@ -1,190 +1,110 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
-const CreateForm = () => {
-  const [title, setTitle] = useState("");
-  const [newQuestion, setNewQuestion] = useState("");
-  const [newQuestionType, setNewQuestionType] = useState("short");
-  const [questionList, setQuestionList] = useState([]);
+const FormsPage = () => {
+  const router = useRouter()
+  const [forms, setForms] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!title.trim()) {
-      toast.error("Form title is required");
-      return;
+  useEffect(() => {
+    fetchForms();
+  }, []);
+
+  const fetchForms = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('http://localhost:5000/form/getall');
+      if (!res.ok) {
+        throw new Error('Failed to fetch forms');
+      }
+      const data = await res.json();
+      setForms(data);
+    } catch (error) {
+      console.error("Error fetching forms:", error);
+      setError(error.message);
+      toast.error("An error occurred while fetching forms");
+    } finally {
+      setIsLoading(false);
     }
-    if (questionList.length === 0) {
-      toast.error("At least one question is required");
-      return;
-    }
-    console.log(questionList);
+  };
+
+  const createNewForm = async () => {
     try {
       const res = await fetch('http://localhost:5000/form/add', {
         method: 'POST',
-        body: JSON.stringify({ title, questions: questionList, createdAt: new Date() }),
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
+        // You can add any initial form data here if needed
+        body: JSON.stringify({ title: 'Untitled Form' }),
       });
-     
-      if (res.ok) {
-        console.log(res);
-        toast.success("Form submitted successfully");
-        setTitle("");
-        setNewQuestion("");
-        setNewQuestionType("short");
-        setQuestionList([]);
-      } else {
-        toast.error("Something went wrong");
+
+      if (!res.ok) {
+        throw new Error('Failed to create new form');
       }
+
+      const newForm = await res.json();
+      // console.log(newForm);
+      // return;
+      router.push(`/createForm/${newForm._id}`);
     } catch (error) {
-      console.error("Error submitting form:", error);
-      toast.error("An error occurred while submitting the form");
+      console.error("Error creating new form:", error);
+      toast.error("An error occurred while creating a new form");
     }
   };
 
-  const addQuestion = () => {
-    if (newQuestion.trim() !== "") {
-      setQuestionList([...questionList, {
-        name: newQuestion,
-        type: newQuestionType,
-        options: newQuestionType === 'multiple' ? ['Option 1'] : [],
-      }]);
-      setNewQuestion("");
-      setNewQuestionType("short");
-    }
-  };
+  if (isLoading) {
+    return <div className="text-center mt-8">Loading...</div>;
+  }
 
-  const handleAddOption = (questionIndex) => {
-    const updatedQuestions = [...questionList];
-    updatedQuestions[questionIndex].options.push('New Option');
-    setQuestionList(updatedQuestions);
-  };
+  if (error) {
+    return <div className="text-center mt-8 text-red-500">Error: {error}</div>;
+  }
 
-  const handleDeleteOption = (questionIndex, optionIndex) => {
-    const updatedQuestions = [...questionList];
-    updatedQuestions[questionIndex].options.splice(optionIndex, 1);
-    setQuestionList(updatedQuestions);
-  };
 
-  const handleOptionChange = (questionIndex, optionIndex, value) => {
-    const updatedQuestions = [...questionList];
-    updatedQuestions[questionIndex].options[optionIndex] = value;
-    setQuestionList(updatedQuestions);
-  };
 
-  const handleQuestionTypeChange = (questionIndex, newType) => {
-    const updatedQuestions = [...questionList];
-    updatedQuestions[questionIndex].type = newType;
-    if (newType === 'multiple' && updatedQuestions[questionIndex].options.length === 0) {
-      updatedQuestions[questionIndex].options = ['Option 1'];
-    }
-    setQuestionList(updatedQuestions);
-  };
-
-  const getResponseType = (question, questionIndex) => {
-    switch (question.type) {
-      case 'short':
-        return <input placeholder='Short answer' className='w-full py-2 border-2 ps-3 mb-3 border border-gray-200 rounded' />;
-      case 'paragraph':
-        return <textarea placeholder='Long answer' className='w-full py-2 border-2 ps-3 mb-3 border border-gray-200 rounded' rows="3"></textarea>;
-      case 'multiple':
-        return (
-          <div>
-            {question.options.map((option, optionIndex) => (
-              <div key={optionIndex} className="option flex items-center mb-2">
-                <input
-                  type="text"
-                  value={option}
-                  className='flex-grow py-2 border-2 ps-3 border border-gray-200 rounded-l'
-                  onChange={(e) => handleOptionChange(questionIndex, optionIndex, e.target.value)}
-                  placeholder={`Option ${optionIndex + 1}`}
-                  required
-                />
-                {optionIndex > 0 && (
-                  <button type="button" className='bg-red-500 text-white py-2 px-2 rounded-r' onClick={() => handleDeleteOption(questionIndex, optionIndex)}>
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
-            <button 
-              type="button" 
-              className='bg-blue-500 text-white py-1 px-4 rounded my-2' 
-              onClick={() => handleAddOption(questionIndex)}
-            >
-              Add Option
-            </button>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
+  // Ensure forms is an array before trying to access its length
+  const formsArray = Array.isArray(forms) ? forms : [];
 
   return (
     <div className="container mx-auto p-4">
-      <form onSubmit={handleSubmit}>
-        <div className="mb-8 bg-white shadow-lg rounded-lg p-6">
-          <h1 className="text-2xl font-bold mb-4">Create a New Form</h1>
-          <input 
-            type="text" 
-            value={title} 
-            onChange={(e) => setTitle(e.target.value)} 
-            className='w-full py-2 border-2 ps-3 border border-gray-200 rounded' 
-            placeholder="Form title" 
-          />
-        </div>
-
-        <div className="mb-8 bg-white shadow-lg rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Add New Question</h2>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input 
-              type="text"
-              value={newQuestion}
-              onChange={(e) => setNewQuestion(e.target.value)}
-              className='flex-grow py-2 border-2 ps-3 border border-gray-200 rounded'
-              placeholder="Enter new question"
-            />
-          
-            <button 
-              type="button" 
-              onClick={addQuestion}
-              className='bg-green-500 text-white py-2 px-4 rounded'
-            >
-              Add Question
-            </button>
-          </div>
-        </div>
-
-        {questionList.map((question, questionIndex) => (
-          <div key={questionIndex} className="mb-8 bg-white shadow-lg rounded-lg p-6">
-            <h3 className='text-lg font-semibold mb-3'>{questionIndex + 1}. {question.name}</h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Question Type</label>
-              <select
-                value={question.type}
-                onChange={(e) => handleQuestionTypeChange(questionIndex, e.target.value)}
-                className='mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
-              >
-                <option value="short">Short Answer</option>
-                <option value="paragraph">Paragraph</option>
-                <option value="multiple">Multiple Choice</option>
-              </select>
-            </div>
-            <div className="options">
-              {getResponseType(question, questionIndex)}
-            </div>
-          </div>
-        ))}
-
-        <button type="submit" className='bg-purple-600 text-white py-2 px-6 rounded-lg text-lg font-semibold'>
-          Submit Form
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Your Forms</h1>
+        <button onClick={createNewForm} className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors">
+          Create New Form
         </button>
-      </form>
+      </div>
+
+      {formsArray.length === 0 ? (
+        <p className="text-center text-gray-500">No forms created yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {formsArray.map((form) => (
+            <div key={form._id} className="bg-white shadow-lg rounded-lg p-6 hover:shadow-xl transition-shadow">
+              <h2 className="text-xl font-semibold mb-2">{form.title}</h2>
+              <p className="text-gray-600 mb-4">
+                {form.questions && Array.isArray(form.questions)
+                  ? `${form.questions.length} questions`
+                  : 'No questions'}
+              </p>
+              <div className="flex justify-between">
+                <Link href={`/viewForm/${form._id}`} className="text-blue-500 hover:underline">
+                  View Form
+                </Link>
+                <span className="text-gray-500">
+                  Created: {new Date(form.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default CreateForm;
+export default FormsPage;

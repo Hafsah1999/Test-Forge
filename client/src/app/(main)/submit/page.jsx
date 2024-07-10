@@ -1,3 +1,4 @@
+'use client'
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
@@ -8,7 +9,7 @@ const SubmitForm = ({ formId }) => {
   useEffect(() => {
     const fetchForm = async () => {
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/forms/${formId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/forms/${formId}`);
         const data = await res.json();
         setForm(data);
       } catch (error) {
@@ -27,7 +28,7 @@ const SubmitForm = ({ formId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/forms/submit/${formId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/forms/submit/${formId}`, {
         method: 'POST',
         body: JSON.stringify({ responses }),
         headers: {

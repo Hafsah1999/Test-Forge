@@ -1,30 +1,45 @@
 'use client'
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 
-const Question = () => {
+const CreateForm = () => {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [newQuestion, setNewQuestion] = useState("");
   const [newQuestionType, setNewQuestionType] = useState("short");
   const [questionList, setQuestionList] = useState([]);
+  const [duration, setDuration] = useState(0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!title.trim()) {
+      toast.error("Form title is required");
+      return;
+    }
+    if (questionList.length === 0) {
+      toast.error("At least one question is required");
+      return;
+    }
     console.log(questionList);
     try {
-      const res = await fetch('http://localhost:5000/test/add', {
+      const res = await fetch('http://localhost:5000/form/add', {
         method: 'POST',
         body: JSON.stringify({ title, questions: questionList, createdAt: new Date() }),
         headers: {
           'Content-Type': 'application/json'
         }
       });
+     
       if (res.ok) {
+        console.log(res);
         toast.success("Form submitted successfully");
         setTitle("");
         setNewQuestion("");
         setNewQuestionType("short");
         setQuestionList([]);
+        setDuration(0);
+        router.push("/forms")
       } else {
         toast.error("Something went wrong");
       }
@@ -99,9 +114,9 @@ const Question = () => {
                 )}
               </div>
             ))}
-            <button
-              type="button"
-              className='bg-blue-500 text-white py-1 px-4 rounded my-2'
+            <button 
+              type="button" 
+              className='bg-blue-500 text-white py-1 px-4 rounded my-2' 
               onClick={() => handleAddOption(questionIndex)}
             >
               Add Option
@@ -118,28 +133,39 @@ const Question = () => {
       <form onSubmit={handleSubmit}>
         <div className="mb-8 bg-white shadow-lg rounded-lg p-6">
           <h1 className="text-2xl font-bold mb-4">Create a New Form</h1>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className='w-full py-2 border-2 ps-3 border border-gray-200 rounded'
-            placeholder="Form title"
+          <input 
+            type="text" 
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)} 
+            className='w-full py-2 mb-5 border-2 ps-3 border border-gray-200 rounded' 
+            placeholder="Form title" 
           />
+             <div className="flex items-center justify-end">
+            <label className="mr-2">Duration (minutes):</label>
+            <input 
+              type="number" 
+              value={duration} 
+              onChange={(e) => setDuration(Math.max(0, parseInt(e.target.value)))} 
+              className='w-24 py-2 border-2 ps-3 border border-gray-200 rounded' 
+              min="0"
+            />
+          </div>
         </div>
+     
 
         <div className="mb-8 bg-white shadow-lg rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Add New Question</h2>
           <div className="flex flex-col sm:flex-row gap-2">
-            <input
+            <input 
               type="text"
               value={newQuestion}
               onChange={(e) => setNewQuestion(e.target.value)}
               className='flex-grow py-2 border-2 ps-3 border border-gray-200 rounded'
               placeholder="Enter new question"
             />
-
-            <button
-              type="button"
+          
+            <button 
+              type="button" 
               onClick={addQuestion}
               className='bg-green-500 text-white py-2 px-4 rounded'
             >
@@ -177,4 +203,4 @@ const Question = () => {
   );
 };
 
-export default Question;
+export default CreateForm;
