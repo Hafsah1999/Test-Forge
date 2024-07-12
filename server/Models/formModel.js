@@ -15,6 +15,7 @@ const questionSchema = new Schema({
 
 const formSchema = new Schema({
   title: { type: String, required: true },
+  duration:Number,
   questions: [questionSchema],
   responses: [responseSchema],
   createdAt: { type: Date, default: Date.now }
