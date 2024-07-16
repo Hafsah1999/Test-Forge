@@ -6,6 +6,7 @@ const userRouter = require('./Routers/userRouter');
 const utilRouter = require('./Routers/utils');
 const testRouter = require('./Routers/testRouter');
 const formRouter = require('./Routers/formRouter');
+const studentRouter = require('./Routers/studentRouter');
 
 
 // middleware
@@ -18,6 +19,7 @@ app.use( '/test', testRouter );
 app.use( '/user', userRouter );
 app.use( '/form', formRouter );
 app.use( '/util', utilRouter );
+app.use( '/student', studentRouter );
 
 app.use( express.static('./static/uploads') );
 

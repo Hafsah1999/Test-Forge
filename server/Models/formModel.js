@@ -1,10 +1,11 @@
 const { Schema, model } = require('../connection');
 
 
-const responseSchema = new Schema({
-  questionId: { type: Schema.Types.ObjectId, ref: 'Question', required: true },
-  answer: { type: String, required: true },
-  score: { type: Number, required: true }
+const submissionSchema = new Schema({
+  studentId: { type: Schema.Types.ObjectId, ref: 'student', required: true },
+  formId: { type: Schema.Types.ObjectId, ref: 'form', required: true },
+  answers: { type: Map, of: String },
+  submittedAt: { type: Date, default: Date.now },
 });
 
 const questionSchema = new Schema({
@@ -16,8 +17,9 @@ const questionSchema = new Schema({
 const formSchema = new Schema({
   title: { type: String, required: true },
   duration:Number,
+  status:String,
   questions: [questionSchema],
-  responses: [responseSchema],
+  responses: [submissionSchema],
   createdAt: { type: Date, default: Date.now }
 });
 

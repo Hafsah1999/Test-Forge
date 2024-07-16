@@ -1,11 +1,12 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 const EditForm = () => {
   const [form, setForm] = useState(null);
   const { id } = useParams();
+  const router = useRouter();
 
   useEffect(() => {
     fetchForm();
@@ -25,6 +26,54 @@ const EditForm = () => {
       toast.error("An error occurred while fetching the form");
     }
   };
+
+  // ... (keep all the existing functions)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('http://localhost:5000/form/update/' + id, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(form),
+      });
+
+      if (res.ok) {
+        toast.success("Form updated successfully");
+      } else {
+        toast.error("Failed to update form");
+      }
+    } catch (error) {
+      console.error("Error updating form:", error);
+      toast.error("An error occurred while updating the form");
+    }
+  };
+
+  const handlePublish = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/form/update/' + id, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...form, status: 'published' }),
+      });
+
+      if (res.ok) {
+        toast.success("Form published successfully");
+        router.push('/forms'); // Redirect to the forms list page
+      } else {
+        toast.error("Failed to publish form");
+      }
+    } catch (error) {
+      console.error("Error publishing form:", error);
+      toast.error("An error occurred while publishing the form");
+    }
+  };
+
+
 
   const handleTitleChange = (e) => {
     setForm(prev => ({ ...prev, title: e.target.value }));
@@ -78,27 +127,7 @@ const EditForm = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch('http://localhost:5000/form/update/' + id, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(form),
-      });
-
-      if (res.ok) {
-        toast.success("Form updated successfully");
-      } else {
-        toast.error("Failed to update form");
-      }
-    } catch (error) {
-      console.error("Error updating form:", error);
-      toast.error("An error occurred while updating the form");
-    }
-  };
+ 
 
   if (!form) {
     return <div className="text-center mt-8">Loading...</div>;
@@ -177,12 +206,27 @@ const EditForm = () => {
           Add Question
         </button>
         
-        <button
-          type="submit"
-          className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
-        >
-          Save Changes
-        </button>
+        <div className="container mx-auto p-4">
+      <form onSubmit={handleSubmit}>
+        {/* ... (keep all the existing form fields) */}
+        
+        <div className="flex justify-between mt-4">
+          <button
+            type="submit"
+            className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+          >
+            Save Changes
+          </button>
+          <button
+            type="button"
+            onClick={handlePublish}
+            className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition-colors"
+          >
+            Publish Form
+          </button>
+        </div>
+      </form>
+    </div>
       </form>
     </div>
   );

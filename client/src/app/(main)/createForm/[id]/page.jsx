@@ -8,6 +8,7 @@ const CreateForm = () => {
   const { id } = useParams();
   const [form, setForm] = useState({
     title: "",
+    status:'',
     questions: [],
     duration: 0
   });
